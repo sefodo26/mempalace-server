@@ -28,10 +28,12 @@ Copy the skills from this repo into your Claude Code skills folder:
 mkdir -p ~/.claude/skills
 cp -r skills/mempalace-ingest-docs ~/.claude/skills/
 cp -r skills/mempalace-read-docs   ~/.claude/skills/
+cp -r skills/mempalace-zettelkasten ~/.claude/skills/
 ```
 
-Now Claude Code knows how to **write** docs into MemPalace and **read** them
-back. (Skip this step if you only want to use raw `curl` — see Step 3b.)
+Now Claude Code knows how to **write** docs into MemPalace, **read** them back,
+and capture ideas as linked Zettelkasten notes. (Skip this step if you only want
+to use raw `curl` — see Step 3b.)
 
 ---
 

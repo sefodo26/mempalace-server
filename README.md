@@ -143,6 +143,7 @@ Two ready-made Claude Code skills and a step-by-step guide live in
 
 - [`mempalace-ingest-docs`](skills/mempalace-ingest-docs/SKILL.md) — file a document into MemPalace
 - [`mempalace-read-docs`](skills/mempalace-read-docs/SKILL.md) — search and export it
+- [`mempalace-zettelkasten`](skills/mempalace-zettelkasten/SKILL.md) — capture ideas as atomic, linked notes that resurface fast
 - [`skills/Beispiel.md`](skills/Beispiel.md) — full walkthrough, including a read-only key for customers
 
 ---
