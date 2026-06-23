@@ -208,8 +208,8 @@ func (s *Server) toolListWings(args map[string]any) (any, error) {
 	}
 
 	type wingInfo struct {
-		Wing   string `json:"wing"`
-		Drawers int   `json:"drawers"`
+		Wing    string `json:"wing"`
+		Drawers int    `json:"drawers"`
 	}
 	list := make([]wingInfo, 0, len(wingCounts))
 	for w, c := range wingCounts {
@@ -435,11 +435,11 @@ func (s *Server) toolAddDrawer(args map[string]any) (any, error) {
 			stored++
 		}
 		return map[string]any{
-			"success":      true,
+			"success":        true,
 			"bullets_stored": stored,
-			"bullets_total": len(bullets),
-			"wing":         wing,
-			"room":         room,
+			"bullets_total":  len(bullets),
+			"wing":           wing,
+			"room":           room,
 		}, nil
 	}
 

@@ -16,7 +16,8 @@ type Config struct {
 	TenantID string
 
 	// Auth
-	MCPAPIKey string
+	MCPAPIKey         string // full access (read + write); required
+	MCPAPIKeyReadOnly string // optional read-only key; "" disables it
 
 	// Embedding (OpenAI-compatible API — works with Ollama, LM Studio, etc.)
 	EmbedAPIURL string // e.g. http://ollama:11434/v1
@@ -36,18 +37,19 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		DatabaseURL: env("MEMPALACE_DB_URL", ""),
-		PoolMin:     int32(envInt("MEMPALACE_PG_POOL_MIN", 2)),
-		PoolMax:     int32(envInt("MEMPALACE_PG_POOL_MAX", 10)),
-		TenantID:    env("MEMPALACE_TENANT_ID", "default"),
-		MCPAPIKey:   env("MCP_API_KEY", ""),
-		EmbedAPIURL: env("EMBED_API_URL", "http://localhost:11434/v1"),
-		EmbedAPIKey: env("EMBED_API_KEY", ""),
-		EmbedModel:  env("EMBED_MODEL", "embeddinggemma"),
-		EmbedDim:    envInt("EMBED_DIM", 768),
-		EFSearch:      envInt("MEMPALACE_HNSW_EF_SEARCH", 100),
-		EnableRESTAPI: envBool("ENABLE_REST_API", false),
-		Port:          env("PORT", "8000"),
+		DatabaseURL:       env("MEMPALACE_DB_URL", ""),
+		PoolMin:           int32(envInt("MEMPALACE_PG_POOL_MIN", 2)),
+		PoolMax:           int32(envInt("MEMPALACE_PG_POOL_MAX", 10)),
+		TenantID:          env("MEMPALACE_TENANT_ID", "default"),
+		MCPAPIKey:         env("MCP_API_KEY", ""),
+		MCPAPIKeyReadOnly: env("MCP_API_KEY_READONLY", ""),
+		EmbedAPIURL:       env("EMBED_API_URL", "http://localhost:11434/v1"),
+		EmbedAPIKey:       env("EMBED_API_KEY", ""),
+		EmbedModel:        env("EMBED_MODEL", "embeddinggemma"),
+		EmbedDim:          envInt("EMBED_DIM", 768),
+		EFSearch:          envInt("MEMPALACE_HNSW_EF_SEARCH", 100),
+		EnableRESTAPI:     envBool("ENABLE_REST_API", false),
+		Port:              env("PORT", "8000"),
 	}
 }
 

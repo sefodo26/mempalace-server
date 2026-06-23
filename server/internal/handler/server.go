@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 
+	"mempalace/server/internal/auth"
 	"mempalace/server/internal/config"
 	"mempalace/server/internal/embed"
 	"mempalace/server/internal/storage"
@@ -159,6 +160,11 @@ func (s *Server) handleToolsCall(r *http.Request, id any, params json.RawMessage
 	fn, ok := s.router[p.Name]
 	if !ok {
 		return errResp(id, codeMethodNotFound, "unknown tool: "+p.Name)
+	}
+
+	// Read-only keys may only call non-mutating tools.
+	if !allowsTool(auth.PermFromContext(r.Context()), p.Name) {
+		return errResp(id, codeForbidden, "write permission required for tool: "+p.Name)
 	}
 
 	// Whitelist args to declared schema properties only

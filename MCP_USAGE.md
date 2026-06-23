@@ -22,7 +22,18 @@ MemPalace speaks MCP over HTTP (the *Streamable HTTP* transport).
 | **Health check** | `GET http://<host>:8000/mp/mcp/health` |
 
 Every request must carry the bearer token. Without it, the server rejects the
-request. The token is whatever you set as `MCP_API_KEY` on the server.
+request.
+
+There are two kinds of token:
+
+| Token | Env variable | Access |
+| --- | --- | --- |
+| Full | `MCP_API_KEY` | read **and** write |
+| Read-only | `MCP_API_KEY_READONLY` (optional) | read only |
+
+A read-only token may call non-mutating tools only. Calling a write tool with
+it returns a JSON-RPC error with code `-32003` ("write permission required").
+Write tools are marked **✏️** in the [tool reference](#5-tool-reference) below.
 
 Supported protocol versions (newest first):
 `2025-11-25`, `2025-06-18`, `2025-03-26`, `2024-11-05`.
@@ -144,7 +155,8 @@ On top of that:
 ## 5. Tool reference
 
 All tools are prefixed `mempalace_`. The agent picks them automatically; this
-list is for understanding what exists.
+list is for understanding what exists. Tools marked **✏️** mutate state and
+require a full-access key; the rest are readable with a read-only key too.
 
 ### Browse & inspect
 
@@ -162,17 +174,17 @@ list is for understanding what exists.
 | --- | --- |
 | `mempalace_search` | Semantic search — returns drawers with similarity scores |
 | `mempalace_check_duplicate` | Check if content already exists before filing |
-| `mempalace_add_drawer` | File verbatim content into the palace |
+| `mempalace_add_drawer` ✏️ | File verbatim content into the palace |
 | `mempalace_get_drawer` | Fetch a single drawer by ID |
 | `mempalace_list_drawers` | List drawers, with wing/room filter and pagination |
-| `mempalace_update_drawer` | Update a drawer's content and/or metadata |
-| `mempalace_delete_drawer` | Delete a drawer by ID |
+| `mempalace_update_drawer` ✏️ | Update a drawer's content and/or metadata |
+| `mempalace_delete_drawer` ✏️ | Delete a drawer by ID |
 
 ### Diary
 
 | Tool | What it does |
 | --- | --- |
-| `mempalace_diary_write` | Write a diary entry (stored as a drawer) |
+| `mempalace_diary_write` ✏️ | Write a diary entry (stored as a drawer) |
 | `mempalace_diary_read` | Read recent diary entries for an agent |
 
 ### Tunnels (cross-wing links)
@@ -182,18 +194,18 @@ list is for understanding what exists.
 | `mempalace_traverse` | Walk the palace graph from a room to connected ideas |
 | `mempalace_find_tunnels` | Find rooms that bridge two wings |
 | `mempalace_follow_tunnels` | Follow tunnels from a room to connected rooms |
-| `mempalace_create_tunnel` | Create a cross-wing tunnel between two locations |
+| `mempalace_create_tunnel` ✏️ | Create a cross-wing tunnel between two locations |
 | `mempalace_list_tunnels` | List all explicit tunnels (optional wing filter) |
-| `mempalace_delete_tunnel` | Delete a tunnel by ID |
+| `mempalace_delete_tunnel` ✏️ | Delete a tunnel by ID |
 | `mempalace_graph_stats` | Palace graph overview |
 
 ### Knowledge graph — facts over time
 
 | Tool | What it does |
 | --- | --- |
-| `mempalace_kg_add` | Add a fact: subject → predicate → object, with optional time window |
+| `mempalace_kg_add` ✏️ | Add a fact: subject → predicate → object, with optional time window |
 | `mempalace_kg_query` | Query an entity's facts; filter by `as_of` date |
-| `mempalace_kg_invalidate` | Mark a fact as no longer true |
+| `mempalace_kg_invalidate` ✏️ | Mark a fact as no longer true |
 | `mempalace_kg_timeline` | Chronological timeline of facts |
 | `mempalace_kg_stats` | KG overview: entities, facts, current vs expired |
 
@@ -201,11 +213,11 @@ list is for understanding what exists.
 
 | Tool | What it does |
 | --- | --- |
-| `mempalace_kg_add_entity` | Add or update an entity (merge by name) |
-| `mempalace_kg_add_relation` | Add a directed relation between two entities |
+| `mempalace_kg_add_entity` ✏️ | Add or update an entity (merge by name) |
+| `mempalace_kg_add_relation` ✏️ | Add a directed relation between two entities |
 | `mempalace_kg_get_entity` | Fetch an entity and its direct relations |
 | `mempalace_kg_search_entities` | Search entities by name (optional type filter) |
-| `mempalace_kg_delete_entity` | Delete an entity and its relations |
+| `mempalace_kg_delete_entity` ✏️ | Delete an entity and its relations |
 | `mempalace_kg_traverse` | Traverse the graph from an entity up to a depth |
 
 ### Meta
@@ -213,7 +225,7 @@ list is for understanding what exists.
 | Tool | What it does |
 | --- | --- |
 | `mempalace_get_aaak_spec` | The AAAK compressed-memory format spec |
-| `mempalace_hook_settings` | Get/set hook behavior (silent save, desktop toast) |
+| `mempalace_hook_settings` ✏️ | Get/set hook behavior (silent save, desktop toast) |
 | `mempalace_reconnect` | Reconnect to the database (no-op; auto-reconnects) |
 
 If Apache AGE is not installed, the entity-graph tools return a clear error and
@@ -241,6 +253,7 @@ A well-behaved agent usually:
 | Symptom | Likely cause |
 | --- | --- |
 | `401` / request rejected | Missing or wrong `Authorization: Bearer` token |
+| `-32003` write permission required | Used the read-only key for a write tool |
 | `unknown tool` | Tool name misspelled — check `tools/list` |
 | Search returns nothing | Embedding API unreachable, or no drawers yet |
 | Entity-graph tools error | Apache AGE not installed (other tools still work) |

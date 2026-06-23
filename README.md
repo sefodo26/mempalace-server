@@ -137,6 +137,33 @@ available tool — see **[MCP_USAGE.md](MCP_USAGE.md)**.
 
 ---
 
+## Access control: read vs write keys
+
+The server supports two kinds of API key:
+
+| Key | Env variable | Can do |
+| --- | --- | --- |
+| **Full** | `MCP_API_KEY` | Everything — read **and** write |
+| **Read-only** | `MCP_API_KEY_READONLY` | Read only — search, list, get, … |
+
+The read-only key is **optional**. Set it to give some clients (dashboards,
+read-only agents, monitoring) safe access that cannot change anything.
+
+- A read-only key may call non-mutating operations only. Any write — add,
+  update, delete, create tunnel, add/invalidate facts, change settings — is
+  rejected (`403` for REST, JSON-RPC error `-32003` for MCP).
+- The two keys **must be different**; the server refuses to start otherwise.
+- This applies to **both** the MCP endpoint and the optional REST API.
+
+```bash
+# Full access
+MCP_API_KEY="super-secret-write-key"
+# Optional read-only access
+MCP_API_KEY_READONLY="another-secret-read-key"
+```
+
+---
+
 ## Optional: plain REST/JSON API
 
 Most users only need MCP. But if you want to talk to the palace from a normal
@@ -209,7 +236,8 @@ All settings come from environment variables.
 | Variable | What it does | Default |
 | --- | --- | --- |
 | `MEMPALACE_DB_URL` | PostgreSQL connection string (**required**) | – |
-| `MCP_API_KEY` | API key clients must send | – |
+| `MCP_API_KEY` | Full-access API key (read + write) | – |
+| `MCP_API_KEY_READONLY` | Optional read-only API key (see below) | empty |
 | `EMBED_API_URL` | OpenAI-compatible embedding API | `http://localhost:11434/v1` |
 | `EMBED_API_KEY` | API key for the embedding API (if needed) | empty |
 | `EMBED_MODEL` | Embedding model name | `embeddinggemma` |

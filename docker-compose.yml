@@ -38,7 +38,11 @@ services:
       # Database
       MEMPALACE_DB_URL:     "postgres://mempalace:mempalace_local@db:5432/mempalace"
       # ⚠️  Change this key before exposing the port externally
+      # MCP_API_KEY grants full access (read + write).
       MCP_API_KEY:          "local-dev-key-change-me"
+      # Optional read-only key — its holders may only read, never mutate.
+      # Must differ from MCP_API_KEY. Leave empty to disable.
+      MCP_API_KEY_READONLY: ""
       # Embedding — external Ollama server
       # embeddinggemma: multilingual (100+ languages), native 768 dims.
       # EMBED_DIM must equal the model's output; cannot exceed it.

@@ -27,6 +27,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"mempalace/server/internal/auth"
 )
 
 const restBase = "/mp/api/v1"
@@ -61,7 +63,7 @@ func (s *Server) restGet(tool string, queryKeys ...string) http.HandlerFunc {
 				args[k] = coerce(v)
 			}
 		}
-		s.runTool(w, tool, args)
+		s.runTool(w, r, tool, args)
 	}
 }
 
@@ -77,7 +79,7 @@ func (s *Server) restBody(tool string) http.HandlerFunc {
 				return
 			}
 		}
-		s.runTool(w, tool, args)
+		s.runTool(w, r, tool, args)
 	}
 }
 
@@ -95,16 +97,22 @@ func (s *Server) restPath(tool string) http.HandlerFunc {
 			}
 		}
 		args["drawer_id"] = r.PathValue("id")
-		s.runTool(w, tool, args)
+		s.runTool(w, r, tool, args)
 	}
 }
 
 // runTool invokes a registered tool by name and writes its result as JSON.
 // Args are whitelisted to the tool's declared schema, exactly like MCP.
-func (s *Server) runTool(w http.ResponseWriter, tool string, args map[string]any) {
+func (s *Server) runTool(w http.ResponseWriter, r *http.Request, tool string, args map[string]any) {
 	fn, ok := s.router[tool]
 	if !ok {
 		writeRESTError(w, http.StatusNotFound, "unknown endpoint")
+		return
+	}
+
+	// Read-only keys may only call non-mutating tools.
+	if !allowsTool(auth.PermFromContext(r.Context()), tool) {
+		writeRESTError(w, http.StatusForbidden, "write permission required")
 		return
 	}
 

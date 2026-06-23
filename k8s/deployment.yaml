@@ -46,11 +46,19 @@ spec:
 
           env:
             # -- Auth --
+            # MCP_API_KEY grants full access (read + write).
             - name: MCP_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: mempalace-secrets
                   key: api-key
+            # Optional read-only key — callers using it may only read, not
+            # mutate. Must differ from MCP_API_KEY. Remove if not needed.
+            # - name: MCP_API_KEY_READONLY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: mempalace-secrets
+            #       key: api-key-readonly
 
             # -- Database --
             - name: MEMPALACE_DB_URL

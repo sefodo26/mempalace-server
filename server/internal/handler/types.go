@@ -14,10 +14,10 @@ type rpcRequest struct {
 }
 
 type rpcResponse struct {
-	JSONRPC string   `json:"jsonrpc"`
-	ID      any      `json:"id,omitempty"`
-	Result  any      `json:"result,omitempty"`
-	Error   *rpcErr  `json:"error,omitempty"`
+	JSONRPC string  `json:"jsonrpc"`
+	ID      any     `json:"id,omitempty"`
+	Result  any     `json:"result,omitempty"`
+	Error   *rpcErr `json:"error,omitempty"`
 }
 
 type rpcErr struct {
@@ -31,6 +31,7 @@ const (
 	codeMethodNotFound = -32601
 	codeInvalidParams  = -32602
 	codeInternalError  = -32000
+	codeForbidden      = -32003 // valid key, but lacks permission for this tool
 )
 
 func errResp(id any, code int, msg string) rpcResponse {

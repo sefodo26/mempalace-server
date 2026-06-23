@@ -26,6 +26,12 @@ func main() {
 	if cfg.MCPAPIKey == "" {
 		log.Println("WARNING: MCP_API_KEY is not set — all requests will be rejected")
 	}
+	if cfg.MCPAPIKeyReadOnly != "" {
+		if cfg.MCPAPIKeyReadOnly == cfg.MCPAPIKey {
+			log.Fatal("MCP_API_KEY_READONLY must differ from MCP_API_KEY")
+		}
+		log.Println("read-only API key enabled (MCP_API_KEY_READONLY)")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -84,7 +90,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      auth.Bearer(cfg.MCPAPIKey, mux),
+		Handler:      auth.Bearer(cfg.MCPAPIKey, cfg.MCPAPIKeyReadOnly, mux),
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,

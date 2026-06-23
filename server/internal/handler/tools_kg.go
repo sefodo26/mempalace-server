@@ -132,9 +132,9 @@ func (s *Server) toolKGGetEntity(args map[string]any) (any, error) {
 		return map[string]any{"found": false, "name": name}, nil
 	}
 	return map[string]any{
-		"found":         true,
-		"entity":        entity,
-		"relations":     rels,
+		"found":          true,
+		"entity":         entity,
+		"relations":      rels,
 		"relation_count": len(rels),
 	}, nil
 }
