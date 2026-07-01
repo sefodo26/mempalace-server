@@ -24,6 +24,8 @@ are measured, not estimated.
 | --- | --- |
 | `corpus.py` | Hand-authored synthetic knowledge base: 37 atomic facts + 40 probe questions, each with a deterministic gold answer token and the id of the fact that answers it. Facts carry a `session` number for the cross-session test. |
 | `mempalace_bench.py` | The harness: three modes (`latency`, `sessions`, `tokens`) plus `all`. |
+| `coding_corpus.py` / `coding_bench.py` | **Coding-usefulness** benchmark: corpus of real facts about *this* repo; measures coding Q&A, memory-vs-reading-source tokens, and tribal-knowledge recall. See [`CODING.md`](CODING.md). |
+| `longmemeval_adapter.py` | Runs the reference project's LongMemEval retrieval benchmark through this stack. See [`COMPARISON.md`](COMPARISON.md). |
 
 The corpus is deliberately hand-written (not LLM-generated) so gold answers are
 known with certainty and the run is reproducible. Questions are paraphrased away
@@ -116,3 +118,11 @@ through this Go server with the identical metric (`recall_any@5`), via
 the reference's published non-LLM 0.966 / 0.982 — from an independent
 implementation on a different embedding model. Full write-up in
 [`COMPARISON.md`](COMPARISON.md).
+
+## Usefulness for a coding agent
+
+`coding_bench.py` asks the question that matters for a coding assistant, using a
+corpus of real facts about this repo: recalling a code fact from a card is ~76×
+cheaper in tokens than re-reading the source file at equal accuracy, and design
+rationale / gotchas that aren't in the code are recovered 100% from memory vs.
+25% by an agent that can read the whole source. See [`CODING.md`](CODING.md).
