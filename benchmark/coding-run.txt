@@ -1,0 +1,54 @@
+MemPalace up. gen model: qwen3.5:4b
+
+========================================================================
+C1  coding Q&A:  retrieval + answer correctness + latency
+========================================================================
+Reset store (17 old drawers removed).
+Filed 17 codebase facts as cards.
+
+  code lookups           n=13  recall@1=100.0% recall@5=100.0% answer_correct= 92.3% (ret 101ms / gen 961ms)
+  tribal knowledge       n=4   recall@1=100.0% recall@5=100.0% answer_correct=100.0% (ret 102ms / gen 1158ms)
+
+  overall answer correctness: 16/17 (94.1%)
+  read: with the knowledge filed, the agent answers both code lookups
+        and 'why' questions from a ~5-card retrieval — no file reads.
+
+========================================================================
+C2  memory vs reading the source:  tokens & correctness (code lookups)
+========================================================================
+Reset store (17 old drawers removed).
+Filed 17 codebase facts as cards.
+
+Source bundle = 6 real .go files, 49316 chars ≈ 15978 input tokens/query.
+
+                        read-the-source     memory card (k=5)
+  avg input tokens             15981              211
+  answer correctness           92.3%            92.3%
+  tokens saved / query         15770     (99% smaller prompt)
+
+  read: even when the agent already knows which files hold the answer,
+        reading them costs ~76x the tokens of a retrieved card,
+        at equal correctness. Over a coding session that is the bulk of
+        the context budget spent re-reading unchanged code.
+
+========================================================================
+C3  tribal knowledge:  code-only agent vs memory-backed agent
+========================================================================
+Reset store (17 old drawers removed).
+Filed 17 codebase facts as cards.
+
+  4 'why'/gotcha questions whose answers are NOT in the source.
+  code-only agent sees the full 6-file source bundle; memory agent retrieves cards.
+
+    [MEMORY ONLY] Why does the postgres container break when its launch comman
+    [MEMORY ONLY] Why can the server fail to boot against a brand-new database
+    [MEMORY ONLY] Why are the minikube manifests applied in a single pass rath
+    [both       ] On which address must Ollama listen so minikube pods can rea
+
+  code-only agent (reads the whole source): 1/4 (25.0%)
+  memory-backed agent                     : 4/4 (100.0%)
+
+  read: the reasons behind the code — why args not command, the pgvector
+        bootstrap order, the image-pull race — are not IN the code. grep
+        cannot recover them; a memory of the decision can. This is the
+        part of a codebase that most needs remembering across sessions.

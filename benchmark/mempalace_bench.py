@@ -90,7 +90,7 @@ def mp_add(wing, room, content, source=None):
     return mp("/mp/api/v1/drawers", "POST", b)
 
 
-def ollama_chat(prompt, system=None, model=None, timeout=300):
+def ollama_chat(prompt, system=None, model=None, timeout=300, num_ctx=8192):
     """Return (text, prompt_tokens, gen_tokens, seconds)."""
     msgs = []
     if system:
@@ -101,7 +101,7 @@ def ollama_chat(prompt, system=None, model=None, timeout=300):
         "messages": msgs,
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_ctx": 8192},
+        "options": {"temperature": 0, "num_ctx": num_ctx},
     }
     t0 = time.perf_counter()
     r = _req(OLLAMA_URL + "/api/chat", "POST", body, timeout=timeout)
