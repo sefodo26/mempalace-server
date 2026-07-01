@@ -1,0 +1,40 @@
+LongMemEval through the Go server — 500 questions
+embeddings: embeddinggemma (768d) | retrieval: Go hybrid vector+FTS (RRF)
+metric: recall_any@k (>=1 gold session in top-k), like the reference raw mode
+
+  [ 25/500]  R@5=0.920  R@10=0.960  (32s, 1.3s/q)
+  [ 50/500]  R@5=0.960  R@10=0.980  (63s, 1.3s/q)
+  [ 75/500]  R@5=0.947  R@10=0.973  (95s, 1.3s/q)
+  [100/500]  R@5=0.960  R@10=0.980  (125s, 1.3s/q)
+  [125/500]  R@5=0.960  R@10=0.976  (157s, 1.3s/q)
+  [150/500]  R@5=0.967  R@10=0.980  (190s, 1.3s/q)
+  [175/500]  R@5=0.966  R@10=0.977  (223s, 1.3s/q)
+  [200/500]  R@5=0.965  R@10=0.980  (257s, 1.3s/q)
+  [225/500]  R@5=0.964  R@10=0.982  (291s, 1.3s/q)
+  [250/500]  R@5=0.964  R@10=0.984  (324s, 1.3s/q)
+  [275/500]  R@5=0.967  R@10=0.985  (355s, 1.3s/q)
+  [300/500]  R@5=0.967  R@10=0.987  (388s, 1.3s/q)
+  [325/500]  R@5=0.966  R@10=0.988  (421s, 1.3s/q)
+  [350/500]  R@5=0.969  R@10=0.989  (454s, 1.3s/q)
+  [375/500]  R@5=0.968  R@10=0.989  (486s, 1.3s/q)
+  [400/500]  R@5=0.970  R@10=0.990  (520s, 1.3s/q)
+  [425/500]  R@5=0.972  R@10=0.991  (552s, 1.3s/q)
+  [450/500]  R@5=0.973  R@10=0.991  (586s, 1.3s/q)
+  [475/500]  R@5=0.971  R@10=0.987  (620s, 1.3s/q)
+  [500/500]  R@5=0.972  R@10=0.988  (655s, 1.3s/q)
+
+============================================================
+RESULT over 500 questions
+  Recall@5 : 0.972
+  Recall@10: 0.988
+
+  by question type:
+  type                            R@5   R@10    n
+  knowledge-update              1.000  1.000   78
+  multi-session                 0.970  0.992  133
+  single-session-assistant      0.964  0.964   56
+  single-session-preference     0.967  0.967   30
+  single-session-user           0.957  0.971   70
+  temporal-reasoning            0.970  1.000  133
+
+  wrote /private/tmp/claude-501/-Users-sefo-Desktop--Projekte-mempalace-server-mempalace-server/462a73c9-3426-46c9-b16b-551514f83cbc/scratchpad/longmemeval_results.json

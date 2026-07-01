@@ -27,3 +27,11 @@ COPY --from=age-builder \
 COPY --from=age-builder \
     /usr/share/postgresql/16/extension/ \
     /usr/share/postgresql/16/extension/
+
+# Create the pgvector (and AGE) extensions on first initialisation, so the
+# MemPalace server can register the vector type on its very first connection.
+# Without this a brand-new database has no `vector` type and the server fails to
+# boot. Runs only when the data directory is empty (standard postgres image
+# behaviour); a no-op on an already-initialised volume.
+COPY init-extensions.sh /docker-entrypoint-initdb.d/10-init-extensions.sh
+RUN chmod +x /docker-entrypoint-initdb.d/10-init-extensions.sh

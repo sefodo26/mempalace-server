@@ -1,6 +1,5 @@
 # Local overrides for the MemPalace Go server on minikube.
-# Applied as a strategic-merge patch by minikube-setup.sh:
-#   kubectl -n mempalace patch deployment mempalace --patch-file deployment-patch.yaml
+# Applied as a strategic-merge patch by the kustomize overlay (kustomization.yaml).
 apiVersion: apps/v1
 kind: Deployment
 metadata:

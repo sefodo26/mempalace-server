@@ -1,6 +1,5 @@
 # Local overrides for the PostgreSQL (pgvector + AGE) StatefulSet on minikube.
-# Applied as a strategic-merge patch by minikube-setup.sh:
-#   kubectl -n mempalace patch statefulset mempalace-db --patch-file statefulset-patch.yaml
+# Applied as a strategic-merge patch by the kustomize overlay (kustomization.yaml).
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -13,6 +12,10 @@ spec:
           # Use the image baked into minikube's daemon, never pull.
           imagePullPolicy: IfNotPresent
           # Apache AGE must be preloaded or the entity graph fails to load.
-          # (docker-compose sets the same flag; the prod manifest assumes the
-          # image's own default config already does it.)
-          command: ["postgres", "-c", "shared_preload_libraries=age"]
+          # Use `args`, NOT `command`: in Kubernetes `command` overrides the
+          # image ENTRYPOINT (docker-entrypoint.sh), which is what drops root
+          # privileges to the postgres user — bypass it and postgres refuses to
+          # start as root. `args` overrides only CMD, so the entrypoint still
+          # runs and receives these flags. (docker-compose's `command` maps to
+          # CMD, which is why the same flags work there but not verbatim here.)
+          args: ["postgres", "-c", "shared_preload_libraries=age"]

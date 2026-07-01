@@ -92,25 +92,18 @@ else
   ok "Secret created."
 fi
 
-# --- 5. Apply the manifests, then the local patches ------------------------
-# We apply the production manifests as-is (minus secret/ingress/legacy pvc),
-# then patch in the local-only bits: locally built images, AGE preload, the
-# host-facing embedding URL, and a single server replica.
-info "Applying base manifests…"
-kubectl apply \
-  -f "$SCRIPT_DIR/db-pvc.yaml" \
-  -f "$SCRIPT_DIR/db-service.yaml" \
-  -f "$SCRIPT_DIR/db-statefulset.yaml" \
-  -f "$SCRIPT_DIR/service.yaml" \
-  -f "$SCRIPT_DIR/deployment.yaml"
-
-info "Pointing workloads at the locally built images…"
-kubectl -n "$NAMESPACE" set image statefulset/mempalace-db "postgres=$DB_IMAGE"
-kubectl -n "$NAMESPACE" set image deployment/mempalace "mempalace=$GO_IMAGE"
-
-info "Applying minikube patches (AGE preload, pull policy, embedding URL, replicas)…"
-kubectl -n "$NAMESPACE" patch statefulset mempalace-db --patch-file "$PATCH_DIR/statefulset-patch.yaml"
-kubectl -n "$NAMESPACE" patch deployment  mempalace    --patch-file "$PATCH_DIR/deployment-patch.yaml"
+# --- 5. Apply everything through the local kustomize overlay ----------------
+# The overlay (k8s/minikube/kustomization.yaml) renders the production manifests
+# with the local-only adjustments — locally built images, AGE preload, host-
+# facing embedding URL, single replica, REST API on — and applies them in a
+# single pass. Applying it all at once (rather than apply-then-set-image-then-
+# patch) means each pod is created ONCE with the correct image, so nothing ever
+# gets wedged pulling the placeholder registry image.
+info "Applying manifests via the minikube overlay…"
+# LoadRestrictionsNone lets the overlay reference the sibling base manifests in
+# k8s/ (kustomize forbids '../' paths by default). Rendering then piping to
+# apply is equivalent to `apply -k`, which has no flag to relax that.
+kubectl kustomize --load-restrictor LoadRestrictionsNone "$PATCH_DIR" | kubectl apply -f -
 
 # --- 6. Wait for readiness -------------------------------------------------
 info "Waiting for PostgreSQL to become ready…"

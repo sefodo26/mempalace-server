@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+
+# Never commit downloaded benchmark datasets (may contain persona/PII-like text)
+*longmemeval*_cleaned.json
+locomo*.json
+convomem*.json
+*.jsonl

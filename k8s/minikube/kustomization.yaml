@@ -1,0 +1,44 @@
+# Local minikube overlay for MemPalace.
+#
+# Renders the production manifests with the local-only adjustments applied in a
+# SINGLE `kubectl apply -k`, so every workload is created once with the correct,
+# locally-built image. This avoids the race you get from applying the base
+# manifests (which reference a placeholder registry image with
+# imagePullPolicy: Always) and only afterwards trying to `set image` / `patch`:
+# the pods are already wedged in ImagePullBackOff and the StatefulSet won't
+# recreate them.
+#
+# The Secret is created imperatively by k8s/minikube-setup.sh (fresh random
+# credentials per install) and is intentionally NOT part of this overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../namespace.yaml
+  - ../db-pvc.yaml
+  - ../db-service.yaml
+  - ../db-statefulset.yaml
+  - ../service.yaml
+  - ../deployment.yaml
+
+# Point both workloads at the images built into minikube's own container
+# runtime (see minikube-setup.sh). No registry, no pull.
+images:
+  - name: your-registry.example.com/mempalace-postgres
+    newName: mempalace-postgres
+    newTag: local
+  - name: your-registry.example.com/mempalace-go
+    newName: mempalace-go
+    newTag: local
+
+# Local-only tweaks (pull policy, AGE preload, host-facing embedding URL,
+# single replica, REST API on). See each patch file for details.
+patches:
+  - path: statefulset-patch.yaml
+    target:
+      kind: StatefulSet
+      name: mempalace-db
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: mempalace

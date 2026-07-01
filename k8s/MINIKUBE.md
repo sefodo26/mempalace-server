@@ -108,7 +108,11 @@ minikube start
 
 `minikube image build` builds inside the cluster's container runtime, so there
 is **no registry and no `docker push`**. The PostgreSQL image compiles Apache
-AGE from source, so the first build takes a few minutes.
+AGE from source, so the first build takes a few minutes. The image also ships an
+init script (`k8s/postgres/init-extensions.sh`) that runs `CREATE EXTENSION
+vector` (and `age`) the first time the data directory is initialised — the
+server registers the `vector` type on its very first connection, so the type has
+to exist before the app boots. On an already-initialised volume it is a no-op.
 
 ```bash
 minikube image build -t mempalace-postgres:local k8s/postgres
@@ -135,35 +139,35 @@ kubectl -n mempalace create secret generic mempalace-secrets \
 echo "Your API key: $API_KEY"
 ```
 
-### 4. Apply the manifests and the local patches
+### 4. Apply the manifests through the local overlay
 
-Apply the production manifests (minus the Ingress, the template Secret, and the
-unused legacy `pvc.yaml`), then patch in the local-only adjustments.
+Everything — the production manifests plus the local-only adjustments — is
+applied in one pass through the kustomize overlay in
+[`k8s/minikube/`](minikube/). Doing it in a single apply (rather than
+apply-then-`set image`-then-`patch`) is important: each pod is created **once**
+with the correct locally-built image, so nothing ever gets wedged pulling the
+placeholder registry image the base manifests reference.
 
 ```bash
-kubectl apply \
-  -f k8s/db-pvc.yaml \
-  -f k8s/db-service.yaml \
-  -f k8s/db-statefulset.yaml \
-  -f k8s/service.yaml \
-  -f k8s/deployment.yaml
-
-# point the workloads at the locally built images
-kubectl -n mempalace set image statefulset/mempalace-db postgres=mempalace-postgres:local
-kubectl -n mempalace set image deployment/mempalace      mempalace=mempalace-go:local
-
-# apply the minikube tweaks (see k8s/minikube/*.yaml)
-kubectl -n mempalace patch statefulset mempalace-db --patch-file k8s/minikube/statefulset-patch.yaml
-kubectl -n mempalace patch deployment  mempalace    --patch-file k8s/minikube/deployment-patch.yaml
+# LoadRestrictionsNone lets the overlay reference the sibling base manifests in
+# k8s/ (kustomize forbids '../' paths by default).
+kubectl kustomize --load-restrictor LoadRestrictionsNone k8s/minikube \
+  | kubectl apply -f -
 ```
 
-The two patch files in [`k8s/minikube/`](minikube/) change only what's needed
-for a local cluster:
+The overlay ([`kustomization.yaml`](minikube/kustomization.yaml)) pulls in the
+production manifests (minus the Ingress, the template Secret, and the unused
+legacy `pvc.yaml`), rewrites both images to the `:local` tags, and applies two
+strategic-merge patches that change only what's needed for a local cluster:
 
 - **`statefulset-patch.yaml`** — `imagePullPolicy: IfNotPresent` and
-  `command: ["postgres", "-c", "shared_preload_libraries=age"]`. **Apache AGE
-  must be preloaded**, or the entity graph fails to load. (docker-compose sets
-  the same flag.)
+  `args: ["postgres", "-c", "shared_preload_libraries=age"]`. **Apache AGE must
+  be preloaded**, or the entity graph fails to load. Note this is `args`, not
+  `command`: in Kubernetes `command` overrides the image *entrypoint*
+  (`docker-entrypoint.sh`), which is what drops root privileges to the
+  `postgres` user — override it and Postgres refuses to start as root. `args`
+  overrides only the default CMD, so the entrypoint still runs. (docker-compose's
+  `command:` maps to CMD, which is why the same flags work there verbatim.)
 - **`deployment-patch.yaml`** — `imagePullPolicy: IfNotPresent`,
   `replicas: 1`, `EMBED_API_URL=http://host.minikube.internal:11434/v1`, and
   `ENABLE_REST_API=true` so you can also poke the REST API with curl.
@@ -212,6 +216,18 @@ kubectl -n mempalace logs deploy/mempalace
 - *Embedding API errors / connection refused* — Ollama isn't reachable. Confirm
   it runs with `OLLAMA_HOST=0.0.0.0 ollama serve` and that the model is pulled
   (`ollama list` should show `embeddinggemma`).
+
+- *`ping database: vector type not found in the database`* — the `vector`
+  extension was never created in the `mempalace` database. Normally the image's
+  init script handles this on a fresh volume; if you are reusing a volume that
+  predates the script, create it by hand and restart the server:
+
+  ```bash
+  kubectl -n mempalace exec mempalace-db-0 -- \
+    psql -U mempalace -d mempalace -c \
+    "CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS age;"
+  kubectl -n mempalace rollout restart deployment/mempalace
+  ```
 
 **Database pod won't start, or AGE errors in the server logs**
 

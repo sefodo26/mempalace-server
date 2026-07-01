@@ -1,0 +1,75 @@
+MemPalace up. store has 1 drawers. gen model: qwen3.5:4b
+
+========================================================================
+THEME 1  lookup -> useful answer:  latency breakdown + usefulness
+========================================================================
+Reset store (1 old drawers removed).
+Filing 37 facts as cards...
+
+Probes: 40   retrieval limit (k): 5   gen model: qwen3.5:4b
+
+  stage         p50        p95        mean
+  retrieve        96ms      106ms       95ms   (embed query + hybrid search)
+  generate       780ms      917ms      787ms   (LLM turns cards into an answer)
+  TOTAL          879ms     1016ms      883ms
+
+  retrieval share of total (mean): 11%   generation share: 89%
+
+  usefulness
+    gold card retrieved in top-1 : 40/40  (100.0%)
+    gold card retrieved in top-5 : 40/40  (100.0%)
+    final answer correct         : 39/40  (97.5%)
+
+  read: retrieval is a small, flat cost; the LLM dominates wall-clock.
+        a lookup becomes a *useful* answer ~97.5% of the time here,
+        gated mostly by whether the right card was retrieved.
+
+========================================================================
+THEME 2  recall across repeated sessions:  memory vs no-memory
+========================================================================
+Reset store (37 old drawers removed).
+
+Part A — retrieval recall@k as memories accumulate (3 sessions)
+  (each session files more facts; we re-probe everything learned so far)
+
+  session   cards_in_store   probes_answerable   recall@1   recall@5
+        1               21                  24     100.0%     100.0%
+        2               32                  35     100.0%     100.0%
+        3               37                  40     100.0%     100.0%
+
+Part B — does the agent answer *earlier-session* questions?
+  Two agents run at session 3. Questions whose answer was learned in an
+  EARLIER session (session < 3). Stateless agent only sees the current
+  session's notes; MemPalace agent retrieves from its accumulated store.
+
+  questions about earlier sessions: 35
+    stateless agent (current session only): 0/35  (0.0%)
+    MemPalace-backed agent               : 34/35  (97.1%)
+
+  read: cross-session recall is exactly what persistent memory buys.
+        the stateless agent structurally cannot answer these (0.0%);
+        writing memories each session lifts it to 97.1% (+34 answers).
+
+========================================================================
+THEME 3  card-index preprocessing vs long context:  tokens & cost
+========================================================================
+Reset store (37 old drawers removed).
+
+Corpus: 37 facts.  Indexing (embed+store) took 3.6s total,
+        98 ms/card  (one-time preprocessing).
+Whole corpus as prompt context = 884 input tokens per query.
+
+                       full-context     card-index (k=5)
+  avg input tokens            888            181
+  answer correctness        95.0%          97.5%
+  tokens saved / query        706     (80% smaller prompt)
+
+  one-time index cost  ~827 embedding tokens (est.)
+  break-even           ~1.2 queries
+                       (after ~1 lookups the saved generation-input
+                        tokens outweigh the whole indexing cost)
+
+  read: the card index shrinks the per-query prompt by 80% here
+        with correctness within 1 answers of full-context.
+        preprocessing pays for itself almost immediately, and the gap
+        widens with every extra query and every extra document.
