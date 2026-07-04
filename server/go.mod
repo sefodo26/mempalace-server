@@ -3,6 +3,7 @@ module mempalace/server
 go 1.26
 
 require (
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/pgvector/pgvector-go v0.2.2
 )
