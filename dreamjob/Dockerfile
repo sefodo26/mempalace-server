@@ -14,7 +14,7 @@
 # ============================================================================
 
 # ── Stage 1: build ──────────────────────────────────────────────────────────
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 # ca-certificates needed for TLS calls (embed API, Postgres TLS)
 RUN apk add --no-cache ca-certificates git
