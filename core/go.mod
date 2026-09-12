@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/pgvector/pgvector-go v0.4.0
 	github.com/pgvector/pgvector-go/pgx v0.4.0
 )
